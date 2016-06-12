@@ -58,6 +58,7 @@ class Trader
     @game = game
     @@order_factory = OrderFactory.new(@game)
     @ordersFilledCounter = 0
+    @last_order = nil
   end
 
 
@@ -74,10 +75,35 @@ class Trader
 
   def run_order_loop(base_target)
     while @ordersFilledCounter <= 100000
-      order = @@order_factory.create_order(QUANTITY, base_target, "buy", "limit")   
+      if !@last_order
+        make_first_order
+      elsif @last_order["fills"].empty?
+
+      else
+        order = @@order_factory.create_order(QUANTITY, @last_order["price"] - 10, "buy", "limit")
+        @last_order = post_buy(order)  
+      end 
       response = post_buy(order)
-      binding.pry
     end
+  end
+
+  def make_first_order
+    # asks = get_asks
+    # if !asks || asks.empty?
+    #   order = @@order_factory.create_order(QUANTITY, base_target, "buy", "limit")
+    #   @last_order = post_buy(order)   
+    # else
+    #   eligible_asks = asks.select { |ask| ask["price"].to_f < base_target }
+    #   if eligible_asks.empty?
+    #           order = @@order_factory.create_order(QUANTITY, base_target, "buy", "limit")
+    #           @last_order = post_buy(order)   
+
+    #   else
+    #     eligible_asks.sort
+    #   end
+    # end
+      order = @@order_factory.create_order(QUANTITY, base_target, "buy", "limit")
+      @last_order = post_buy(order)  
   end
 
   def post_buy(order)
